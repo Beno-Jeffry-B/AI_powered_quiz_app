@@ -35,11 +35,11 @@ The architecture strictly follows the DFD processes to ensure a clear mapping be
 
 ### Data Flow Diagram
 
-> 📌 
+> 📌 ![Data Flow Diagram]( https://github.com/Beno-Jeffry-B/AI_powered_quiz_app/blob/9ad390fd186cd588b59586339f1a040c0dd63f30/docs/DFD.png)
 
 ### ER Diagram
 
-> 📌 
+> 📌 ![ER Diagram](https://github.com/Beno-Jeffry-B/AI_powered_quiz_app/blob/9ad390fd186cd588b59586339f1a040c0dd63f30/docs/ER.png)
 
 ---
 
