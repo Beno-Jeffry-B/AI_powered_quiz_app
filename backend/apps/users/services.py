@@ -1,7 +1,9 @@
 """
 Users Services — DFD 1.0 User Authentication
 """
+from django.utils import timezone
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.tokens import RefreshToken
 from apps.users.models import User
 
 # DFD 1.0 — Business logic layer for user authentication
@@ -37,7 +39,18 @@ class UserService:
         if not user.check_password(password):
             raise AuthenticationFailed("Invalid email or password")
             
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
+        
         return user
+
+    @staticmethod
+    def generate_auth_tokens(user):
+        refresh = RefreshToken.for_user(user)
+        return {
+            "access_token": str(refresh.access_token),
+            "refresh_token": str(refresh)
+        }
 
     @staticmethod
     def get_user_profile(user_id: str):

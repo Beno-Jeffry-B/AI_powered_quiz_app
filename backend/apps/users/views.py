@@ -37,12 +37,15 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginRequestSerializer(data=request.data)
         if serializer.is_valid():
-            UserService.verify_user(
+            user = UserService.verify_user(
                 serializer.validated_data["email"],
                 serializer.validated_data["password"]
             )
+            tokens = UserService.generate_auth_tokens(user)
             return Response({
-                "message": "User verified"
+                "message": "Login successful",
+                "access_token": tokens["access_token"],
+                "refresh_token": tokens["refresh_token"]
             })
         return Response(serializer.errors, status=400)
 
