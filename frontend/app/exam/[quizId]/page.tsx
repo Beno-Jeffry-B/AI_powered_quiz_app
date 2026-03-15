@@ -6,10 +6,13 @@ import { useQuiz } from "@/context/QuizContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import ResultModal from "@/components/ResultModal";
 import { getQuizDetail } from "@/lib/api";
+import { QuestionSkeleton } from "@/components/Skeleton";
+import { Toast, useToast } from "@/components/Toast";
 
 export default function ExamPage() {
   const { quizId } = useParams();
   const router = useRouter();
+  const { toast, showToast, hideToast } = useToast();
   const { 
     activeQuiz, 
     selectedAnswers, 
@@ -25,7 +28,6 @@ export default function ExamPage() {
   } = useQuiz();
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [showResult, setShowResult] = useState(false);
 
   // Load quiz if not active or different ID
@@ -37,14 +39,14 @@ export default function ExamPage() {
           const data = await getQuizDetail(quizId as string);
           startQuiz(data);
         } catch (err: any) {
-          setError(err.message || "Failed to load quiz.");
+          showToast(err.message || "Failed to load quiz.", "error");
         } finally {
           setLoading(false);
         }
       };
       loadQuiz();
     }
-  }, [quizId, activeQuiz, startQuiz]);
+  }, [quizId, activeQuiz, startQuiz, showToast]);
 
   const currentQuestion = activeQuiz?.questions[currentIndex];
   const isLastQuestion = activeQuiz && currentIndex === activeQuiz.questions.length - 1;
@@ -64,23 +66,36 @@ export default function ExamPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mb-4"></div>
-          <p className="text-gray-500 font-bold animate-pulse">Loading Your Exam...</p>
+        <div className="max-w-3xl mx-auto py-8 px-4">
+          <div className="flex items-center justify-between mb-10">
+             <div className="space-y-2">
+               <div className="w-48 h-8 bg-gray-200 animate-pulse rounded-lg" />
+               <div className="w-32 h-4 bg-gray-100 animate-pulse rounded-lg" />
+             </div>
+             <div className="w-32 h-12 bg-gray-100 animate-pulse rounded-2xl" />
+          </div>
+          <div className="w-full h-3 bg-gray-100 rounded-full mb-12" />
+          <QuestionSkeleton />
         </div>
       </DashboardLayout>
     );
   }
 
-  if (error) {
+  // Handle case where quiz failed to load or is missing after loading
+  if (!loading && !activeQuiz) {
     return (
       <DashboardLayout>
         <div className="max-w-xl mx-auto py-20 text-center">
-          <div className="bg-red-50 text-red-600 p-8 rounded-3xl border border-red-100 mb-6">
-            <h2 className="text-xl font-bold mb-2">Oops!</h2>
-            <p className="font-medium">{error}</p>
+          <div className="bg-red-50 text-red-600 p-8 rounded-[40px] border border-red-100 mb-8">
+            <h2 className="text-2xl font-black mb-4">Exam Not Found</h2>
+            <p className="font-bold opacity-80 mb-6 text-sm uppercase tracking-widest">The quiz could not be loaded or doesn't exist.</p>
+            <button 
+              onClick={() => router.push('/dashboard')} 
+              className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-red-700 transition-all active:scale-95"
+            >
+              Back to Dashboard
+            </button>
           </div>
-          <button onClick={() => router.push('/dashboard')} className="btn-primary">Back to Dashboard</button>
         </div>
       </DashboardLayout>
     );
@@ -224,6 +239,14 @@ export default function ExamPage() {
         }}
         quizId={activeQuiz.quiz_id}
       />
+
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={hideToast} 
+        />
+      )}
     </DashboardLayout>
   );
 }

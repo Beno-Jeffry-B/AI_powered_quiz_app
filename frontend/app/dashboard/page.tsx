@@ -6,10 +6,12 @@ import DashboardLayout from "@/components/DashboardLayout";
 import Modal from "@/components/Modal";
 import { generateQuiz } from "@/lib/api";
 import { useQuiz } from "@/context/QuizContext";
+import { Toast, useToast } from "@/components/Toast";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { startQuiz } = useQuiz();
+  const { toast, showToast, hideToast } = useToast();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [topic, setTopic] = useState("");
@@ -17,7 +19,6 @@ export default function DashboardPage() {
   const [numMinutes, setNumMinutes] = useState("10");
   const [difficulty, setDifficulty] = useState("medium");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   // Auth guard
   useEffect(() => {
@@ -27,21 +28,14 @@ export default function DashboardPage() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
       const data = await generateQuiz(topic, Number(numQuestions), difficulty);
       startQuiz(data);
       router.push(`/exam/${data.quiz_id}`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
-      if (msg.includes("401") || msg.includes("403")) {
-        localStorage.removeItem("access_token");
-        router.replace("/login");
-      } else {
-        setError(msg);
-      }
+    } catch (err: any) {
+      showToast(err.message || "Failed to generate quiz. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -108,11 +102,6 @@ export default function DashboardPage() {
         title="Quiz Settings"
       >
         <form onSubmit={handleGenerate} className="space-y-6">
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-4 rounded-2xl border border-red-100">
-              {error}
-            </div>
-          )}
 
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Topic</label>
@@ -163,6 +152,13 @@ export default function DashboardPage() {
           </button>
         </form>
       </Modal>
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={hideToast} 
+        />
+      )}
     </DashboardLayout>
   );
 }
