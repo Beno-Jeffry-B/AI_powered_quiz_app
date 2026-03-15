@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+load_dotenv()
+
 # ---------------------------------------------------------------------------
 # Base Paths
 # ---------------------------------------------------------------------------
@@ -156,3 +158,7 @@ USE_TZ = True
 STATIC_URL = "/static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")

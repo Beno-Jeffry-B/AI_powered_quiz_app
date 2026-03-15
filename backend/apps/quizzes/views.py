@@ -19,10 +19,11 @@ class GenerateQuizView(APIView):
         if serializer.is_valid():
             metadata = QuizService.generate_quiz_metadata(serializer.validated_data)
             quiz = QuizService.store_quiz_metadata(request.user, metadata)
+            questions = QuizService.generate_question_set(metadata)
             return Response({
-                "message": "Quiz created",
+                "message": "Quiz generated",
                 "quiz_id": quiz.id,
-                "metadata": metadata
+                "questions": questions
             })
         return Response(serializer.errors, status=400)
 

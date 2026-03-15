@@ -1,17 +1,25 @@
 """
 DFD 2.0 — Quiz Generation
-Services will be implemented in this module.
+Services layer for quiz generation logic.
 """
+
+import json
+from django.conf import settings
+from groq import Groq
+
 from apps.quizzes.models import Quiz
 
 
 class QuizService:
     """
     Business logic for quiz generation and retrieval.
-    Will be implemented in DFD 2.0 — Quiz Generation.
     """
+
     @staticmethod
     def generate_quiz_metadata(validated_data):
+        """
+        DFD 2.2 — Generate Quiz Metadata
+        """
         topic = validated_data.get("topic")
         difficulty = validated_data.get("difficulty")
         number_of_questions = validated_data.get("number_of_questions")
@@ -25,6 +33,9 @@ class QuizService:
 
     @staticmethod
     def store_quiz_metadata(user, metadata):
+        """
+        DFD 2.3 — Store Quiz Metadata in DB
+        """
         quiz = Quiz.objects.create(
             created_by=user,
             title=metadata["title"],
@@ -32,7 +43,63 @@ class QuizService:
             question_count=metadata["question_count"],
             status=metadata["status"]
         )
+
         return quiz
+
+    @staticmethod
+    def generate_question_set(metadata):
+        """
+        DFD 2.4 — Generate Question Set using Groq AI
+        """
+
+        title = metadata["title"]
+        difficulty = metadata["difficulty"]
+        question_count = metadata["question_count"]
+
+        prompt = f"""
+Generate {question_count} multiple choice quiz questions about {title}.
+Difficulty: {difficulty}
+
+Rules:
+- Each question must contain exactly 4 options
+- Provide the correct answer
+- Return ONLY valid JSON
+
+Format:
+[
+  {{
+    "question": "text",
+    "options": ["A", "B", "C", "D"],
+    "answer": "A"
+  }}
+]
+"""
+
+        client = Groq(api_key=settings.GROQ_API_KEY)
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+
+        content = response.choices[0].message.content.strip()
+
+        try:
+            questions = json.loads(content)
+        except Exception:
+            # Fallback if AI response is not valid JSON
+            questions = [
+                {
+                    "question": content,
+                    "options": [],
+                    "answer": ""
+                }
+            ]
+
+        return questions
 
     @staticmethod
     def generate_quiz(user, topic, difficulty, num_questions):
