@@ -4,7 +4,7 @@
 **AI-Powered Quiz App** is a full-stack web application that allows users to generate interactive text-based quizzes on any topic using large language models. The system instantly creates questions using AI, lets the user take the exam in a polished interface, evaluates their answers, and tracks their scores across different attempts.
 
 ## 2. Live Demo
-*(Currently not deployed. See instructions below to run locally.)*
+*https://ai-powered-quiz-app-rosy.vercel.app/*
 
 ## Diagrams
 
