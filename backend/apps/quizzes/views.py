@@ -27,6 +27,7 @@ class GenerateQuizView(APIView):
                 "message":  "Quiz generated successfully",
                 "quiz_id":  quiz.id,
                 "title":    quiz.title,
+                "time_limit": quiz.time_limit,
                 "questions": QuestionSerializer(stored_qs, many=True).data,
             })
         return Response(serializer.errors, status=400)
@@ -49,6 +50,7 @@ class QuizHistoryView(APIView):
                 "difficulty": quiz.difficulty,
                 "score": attempt.score if attempt else 0,
                 "total_questions": quiz.question_count,
+                "percentage": attempt.percentage if attempt else 0.0,
                 "created_at": quiz.created_at.isoformat()
             })
             
@@ -82,6 +84,7 @@ class QuizDetailView(APIView):
                 "quiz_id": quiz.id,
                 "title": quiz.title,
                 "difficulty": quiz.difficulty,
+                "time_limit": quiz.time_limit,
                 "questions": serialized_qs
             })
         except Quiz.DoesNotExist:

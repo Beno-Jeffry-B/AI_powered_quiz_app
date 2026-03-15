@@ -24,11 +24,13 @@ class QuizService:
         topic = validated_data.get("topic")
         difficulty = validated_data.get("difficulty")
         number_of_questions = validated_data.get("number_of_questions")
+        time_limit = validated_data.get("time_limit", 5)
 
         return {
             "title": topic,
             "difficulty": difficulty,
             "question_count": number_of_questions,
+            "time_limit": time_limit,
             "status": "pending"
         }
 
@@ -42,6 +44,7 @@ class QuizService:
             title=metadata["title"],
             difficulty=metadata["difficulty"],
             question_count=metadata["question_count"],
+            time_limit=metadata["time_limit"],
             status=metadata["status"]
         )
 
@@ -62,15 +65,15 @@ Generate {question_count} multiple choice quiz questions about {title}.
 Difficulty: {difficulty}
 
 Rules:
-- Each question must contain exactly 4 options
-- Provide the correct answer
-- Return ONLY valid JSON
+- Each question must contain exactly 4 options.
+- The 'answer' field MUST be the single character key ('A', 'B', 'C', or 'D') corresponding to the correct option.
+- Return ONLY valid JSON.
 
 Format:
 [
   {{
-    "question": "text",
-    "options": ["A", "B", "C", "D"],
+    "question": "Exactly what is asked?",
+    "options": ["Option 1 content", "Option 2 content", "Option 3 content", "Option 4 content"],
     "answer": "A"
   }}
 ]
@@ -92,13 +95,7 @@ Format:
             questions = json.loads(content)
         except Exception:
             # Fallback if AI response is not valid JSON
-            questions = [
-                {
-                    "question": content,
-                    "options": [],
-                    "answer": ""
-                }
-            ]
+            questions = []
 
         return questions
 
@@ -115,6 +112,20 @@ Format:
             while len(options) < 4:
                 options.append("")
             
+            raw_answer = str(q.get("answer", "")).strip()
+            
+            # Robust Mapping: If AI returned the full text instead of A/B/C/D, find the key
+            correct_key = raw_answer
+            if len(raw_answer) > 1 or raw_answer not in ["A", "B", "C", "D"]:
+                # Try to find which option matches the raw text
+                for i, opt in enumerate(options):
+                    if str(opt).strip() == raw_answer:
+                        correct_key = chr(65 + i) # 0->A, 1->B...
+                        break
+                # Default to A if still not matched/valid
+                if len(correct_key) != 1 or correct_key not in ["A", "B", "C", "D"]:
+                    correct_key = "A"
+
             question_obj = Question.objects.create(
                 quiz=quiz,
                 question_text=q.get("question", ""),
@@ -122,7 +133,7 @@ Format:
                 option_b=options[1],
                 option_c=options[2],
                 option_d=options[3],
-                correct_answer=q.get("answer", "")
+                correct_answer=correct_key
             )
             created_questions.append(question_obj)
         

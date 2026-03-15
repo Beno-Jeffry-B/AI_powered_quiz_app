@@ -108,7 +108,9 @@ export default function ReviewPage() {
                   {['A', 'B', 'C', 'D'].map((label) => {
                     const optionValue = q[`option_${label.toLowerCase()}`];
                     const isUserSelection = userAnswer === label;
-                    const isCorrectAnswer = q.correct_answer === label;
+                    
+                    // Smart match: check if label (A-D) matches correct_answer OR if text value matches
+                    const isCorrectAnswer = q.correct_answer === label || String(optionValue).trim() === String(q.correct_answer).trim();
 
                     let bgColor = 'bg-white';
                     let borderColor = 'border-gray-100';

@@ -51,9 +51,24 @@ export default function ExamPage() {
   const currentQuestion = activeQuiz?.questions[currentIndex];
   const isLastQuestion = activeQuiz && currentIndex === activeQuiz.questions.length - 1;
 
-  const handleFinish = () => {
-    finishQuiz();
-    setShowResult(true);
+  const handleFinish = async () => {
+    setLoading(true);
+    try {
+      const answers = Object.entries(selectedAnswers).map(([qId, option]) => ({
+        question_id: qId,
+        selected_option: option,
+      }));
+      
+      const { submitQuizAttempt } = await import("@/lib/api");
+      await submitQuizAttempt(quizId as string, answers);
+      
+      finishQuiz();
+      setShowResult(true);
+    } catch (err: any) {
+      showToast(err.message || "Failed to submit quiz.", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const calculateScore = () => {

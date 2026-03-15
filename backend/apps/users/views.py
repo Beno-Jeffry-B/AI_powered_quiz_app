@@ -32,8 +32,8 @@ class RegisterView(APIView):
             tokens = UserService.generate_auth_tokens(user)
             return Response({
                 "message": "Registration successful",
-                "access":  tokens["access_token"],
-                "refresh": tokens["refresh_token"],
+                "access_token":  tokens["access_token"],
+                "refresh_token": tokens["refresh_token"],
             }, status=201)
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=400)

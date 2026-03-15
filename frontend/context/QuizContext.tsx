@@ -16,6 +16,7 @@ interface Quiz {
   quiz_id: string;
   title: string;
   difficulty: string;
+  time_limit: number;
   questions: Question[];
 }
 
@@ -95,9 +96,9 @@ export function QuizProvider({ children }: { children: React.ReactNode }) {
     setActiveQuiz(quiz);
     setSelectedAnswers({});
     setCurrentIndex(0);
-    // Use provided duration or fall back to 60 seconds per question
-    const totalSeconds = durationMinutes ? durationMinutes * 60 : quiz.questions.length * 60;
-    setTimeLeft(totalSeconds);
+    // Use quiz.time_limit if available, otherwise fall back to provided duration or default based on questions
+    const minutes = quiz.time_limit || durationMinutes || quiz.questions.length;
+    setTimeLeft(minutes * 60);
     setIsFinished(false);
   };
 

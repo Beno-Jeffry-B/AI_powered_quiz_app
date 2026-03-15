@@ -25,8 +25,11 @@ export default function SignupForm() {
     setApiError("");
     setLoading(true);
     try {
-      await signup(email, password);
-      router.push("/login");
+      const data = await signup(email, password);
+      // Auto-login: Store tokens and redirect
+      localStorage.setItem("access_token", data.access_token ?? "");
+      // refresh_token could also be stored if needed for rotation
+      router.push("/dashboard");
     } catch (err: unknown) {
       setApiError(err instanceof Error ? err.message : "Signup failed.");
     } finally {

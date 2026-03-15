@@ -42,10 +42,10 @@ class UserService:
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise AuthenticationFailed("Invalid email or password")
+            raise AuthenticationFailed("User not found. Please sign up first.")
             
         if not user.check_password(password):
-            raise AuthenticationFailed("Invalid email or password")
+            raise AuthenticationFailed("Invalid password. Please try again.")
             
         user.last_login = timezone.now()
         user.save(update_fields=["last_login"])

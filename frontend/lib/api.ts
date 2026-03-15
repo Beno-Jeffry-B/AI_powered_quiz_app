@@ -20,16 +20,16 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     });
   } catch (err) {
     console.error(`[API] Connection failed: ${endpoint}`, err);
-    throw new Error("Unable to connect to the server. Please check your connection.");
+    throw new Error("Server is temporarily unavailable. Please try again later.");
   }
 
-  // Global Auth Handling
-  if (res.status === 401) {
+  // Global Auth Handling (Prevent redirect during login itself)
+  if (res.status === 401 && endpoint !== "/api/v1/auth/login/") {
     localStorage.removeItem("access_token");
     if (typeof window !== "undefined") {
       window.location.href = "/login?error=Session expired. Please login again.";
     }
-    throw new Error("Session expired.");
+    throw new Error("Your session has expired. Please sign in again.");
   }
 
   if (!res.ok) {
@@ -38,8 +38,16 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
       errorData = await res.json();
     } catch { /* ignore non-json errors */ }
     
-    const message = errorData?.detail || errorData?.message || `Request failed with status ${res.status}`;
-    throw new Error(message);
+    // Extract user-friendly error from backend
+    const rawMessage = errorData?.detail || errorData?.message || errorData?.error;
+    if (rawMessage) throw new Error(rawMessage);
+
+    // Fallback for field errors (e.g., serializer errors)
+    const firstFieldError = errorData && typeof errorData === 'object' ? Object.values(errorData)[0] : null;
+    if (Array.isArray(firstFieldError)) throw new Error(firstFieldError[0]);
+    if (typeof firstFieldError === 'string') throw new Error(firstFieldError);
+
+    throw new Error("Something went wrong. Please try again.");
   }
 
   return res.json();
@@ -59,10 +67,10 @@ export async function login(email: string, password: string) {
   });
 }
 
-export async function generateQuiz(topic: string, number_of_questions: number, difficulty: string) {
+export async function generateQuiz(topic: string, number_of_questions: number, difficulty: string, time_limit: number) {
   return apiFetch("/api/v1/quizzes/generate/", {
     method: "POST",
-    body: JSON.stringify({ topic, number_of_questions, difficulty }),
+    body: JSON.stringify({ topic, number_of_questions, difficulty, time_limit }),
   });
 }
 

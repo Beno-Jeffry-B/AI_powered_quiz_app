@@ -42,6 +42,7 @@ class Quiz(models.Model):
     )
 
     question_count = models.IntegerField(default=5)
+    time_limit = models.IntegerField(default=5)  # in minutes
 
     status = models.CharField(
         max_length=20,

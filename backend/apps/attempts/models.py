@@ -23,9 +23,8 @@ class QuizAttempt(models.Model):
     )
 
     score = models.IntegerField(null=True, blank=True)
-
     total_questions = models.IntegerField(default=0)
-
+    percentage = models.FloatField(default=0.0)
     status = models.CharField(max_length=20, default="completed")
 
     attempted_at = models.DateTimeField(auto_now_add=True)

@@ -31,7 +31,7 @@ export default function DashboardPage() {
     setLoading(true);
 
     try {
-      const data = await generateQuiz(topic, Number(numQuestions), difficulty);
+      const data = await generateQuiz(topic, Number(numQuestions), difficulty, Number(numMinutes));
       startQuiz(data);
       router.push(`/exam/${data.quiz_id}`);
     } catch (err: any) {

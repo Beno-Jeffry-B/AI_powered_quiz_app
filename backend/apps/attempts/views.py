@@ -20,9 +20,15 @@ class SubmitQuizAttemptView(APIView):
                 answers=answers
             )
             
+            from apps.evaluation.services import EvaluationService
+            result = EvaluationService.evaluate_attempt(attempt.id)
+            
             return Response({
                 "message": "Quiz attempt submitted",
-                "attempt_id": attempt.id
+                "attempt_id": attempt.id,
+                "score": result["score"],
+                "total_questions": result["total_questions"],
+                "percentage": attempt.percentage
             })
         return Response(serializer.errors, status=400)
 
@@ -30,6 +36,20 @@ class SubmitQuizAttemptView(APIView):
 class AttemptHistoryView(APIView):
     """
     GET /api/v1/attempts/history/
-    Will be implemented in DFD 4.0 — Submit Quiz Attempt.
     """
-    pass
+    def get(self, request):
+        from apps.attempts.models import QuizAttempt
+        attempts = QuizAttempt.objects.filter(user=request.user).order_by("-attempted_at")
+        history = []
+        for att in attempts:
+            history.append({
+                "id": str(att.id),
+                "quiz_id": str(att.quiz.id),
+                "topic": att.quiz.title,
+                "difficulty": att.quiz.difficulty,
+                "score": att.score,
+                "total_questions": att.total_questions,
+                "percentage": att.percentage,
+                "created_at": att.attempted_at.isoformat()
+            })
+        return Response({"attempts": history})

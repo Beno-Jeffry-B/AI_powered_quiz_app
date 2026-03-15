@@ -24,15 +24,29 @@ class EvaluationService:
         # Step 5.2: Determine Correctness
         for user_answer in user_answers:
             question = user_answer.question
-            if user_answer.selected_option == question.correct_answer:
-                user_answer.is_correct = True
+            selected_key = user_answer.selected_option  # e.g., 'A'
+            
+            # Get the actual text value of the selected option
+            selected_value = getattr(question, f"option_{selected_key.lower()}", "")
+            
+            # Check if selection matches key OR full text value of correct answer
+            is_correct = (
+                selected_key == question.correct_answer or 
+                str(selected_value).strip() == str(question.correct_answer).strip()
+            )
+            
+            user_answer.is_correct = is_correct
+            if is_correct:
                 correct_count += 1
-            else:
-                user_answer.is_correct = False
             user_answer.save()
 
         # Step 5.3 & 5.4: Calculate and Update Score
         attempt.score = correct_count
+        if attempt.total_questions > 0:
+            attempt.percentage = (correct_count / attempt.total_questions) * 100
+        else:
+            attempt.percentage = 0.0
+            
         attempt.save()
 
         # Step 5.5: Return result
