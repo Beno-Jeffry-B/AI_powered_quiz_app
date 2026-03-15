@@ -3,33 +3,21 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
-import QuizCard from "@/components/QuizCard";
+import Modal from "@/components/Modal";
 import { generateQuiz } from "@/lib/api";
-
-interface Question {
-  id?: string;
-  question_text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_answer?: string;
-}
-
-interface QuizResult {
-  quiz_id: string;
-  title?: string;
-  questions: Question[];
-}
+import { useQuiz } from "@/context/QuizContext";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { startQuiz } = useQuiz();
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [topic, setTopic] = useState("");
   const [numQuestions, setNumQuestions] = useState("5");
+  const [numMinutes, setNumMinutes] = useState("10");
   const [difficulty, setDifficulty] = useState("medium");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<QuizResult | null>(null);
 
   // Auth guard
   useEffect(() => {
@@ -40,12 +28,12 @@ export default function DashboardPage() {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setResult(null);
     setLoading(true);
 
     try {
       const data = await generateQuiz(topic, Number(numQuestions), difficulty);
-      setResult(data);
+      startQuiz(data);
+      router.push(`/exam/${data.quiz_id}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("401") || msg.includes("403")) {
@@ -61,136 +49,120 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Generate an AI-powered quiz in seconds.
-        </p>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
-
-        {/* ── Quiz Generation Form ── */}
-        <div className="w-full lg:w-[380px] flex-shrink-0">
-          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-base font-semibold text-gray-900">Generate Quiz</h2>
-                <p className="text-xs text-gray-500">Fill in the details below</p>
-              </div>
-            </div>
-
-            {/* Error Banner */}
-            {error && (
-              <div className="mb-5 text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleGenerate} className="space-y-5">
-              {/* Topic */}
-              <div>
-                <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Topic
-                </label>
-                <input
-                  id="topic"
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g. Python Basics, World History..."
-                  required
-                  className="input-field"
-                />
-              </div>
-
-              {/* Number of Questions */}
-              <div>
-                <label htmlFor="numQuestions" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Number of Questions
-                </label>
-                <select
-                  id="numQuestions"
-                  value={numQuestions}
-                  onChange={(e) => setNumQuestions(e.target.value)}
-                  className="input-field bg-white cursor-pointer"
-                >
-                  <option value="5">5</option>
-                  <option value="10">10</option>
-                  <option value="15">15</option>
-                  <option value="20">20</option>
-                </select>
-              </div>
-
-              {/* Difficulty */}
-              <div>
-                <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Difficulty
-                </label>
-                <select
-                  id="difficulty"
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
-                  className="input-field bg-white cursor-pointer"
-                >
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
-
-              {/* Generate Button */}
-              <button type="submit" disabled={loading} className="btn-primary mt-2">
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10"
-                        stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Generating…
-                  </span>
-                ) : "Generate Quiz"}
-              </button>
-            </form>
+      <div className="max-w-4xl mx-auto py-12">
+        {/* Welcome Section */}
+        <div className="bg-indigo-600 rounded-[40px] p-10 md:p-16 text-white mb-10 overflow-hidden relative shadow-2xl shadow-indigo-100">
+           {/* Abstract shapes */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl opacity-50" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400 rounded-full -ml-10 -mb-10 blur-2xl opacity-30" />
+          
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <span className="bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6 backdrop-blur-md">
+              Welcome back
+            </span>
+            <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
+              Ready to challenge <br /> your knowledge?
+            </h1>
+            <p className="text-indigo-100 text-lg max-w-lg mb-10 leading-relaxed font-medium">
+              "Tell me and I forget. Teach me and I remember. Involve me and I learn." — Benjamin Franklin
+            </p>
+            
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-white text-indigo-600 px-10 py-5 rounded-3xl font-black text-lg transition-all 
+                         hover:shadow-xl hover:shadow-indigo-900/20 hover:-translate-y-1 active:scale-95"
+            >
+              Create New Quiz
+            </button>
           </div>
         </div>
 
-        {/* ── Quiz Results ── */}
-        {result && (
-          <div className="flex-1 min-w-0">
-            {/* Result header */}
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">
-                  {result.title ?? topic}
-                </h2>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {result.questions?.length ?? 0} questions · {difficulty} difficulty
-                </p>
-              </div>
-              <span className="text-xs font-medium bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">
-                Quiz ID: {result.quiz_id?.slice(0, 8)}…
-              </span>
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
+          <div className="p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6">
+              <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
             </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Instant Generation</h3>
+            <p className="text-gray-500 font-medium">AI-powered questions on any topic in seconds.</p>
+          </div>
+          
+          <div className="p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+             <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mb-6">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Track Progress</h3>
+            <p className="text-gray-500 font-medium">Review history and retake quizzes to improve.</p>
+          </div>
+        </div>
+      </div>
 
-            {/* Question Cards */}
-            <div className="space-y-4">
-              {(result.questions ?? []).map((q, i) => (
-                <QuizCard key={q.id ?? i} question={q} index={i} />
-              ))}
+      {/* Generator Modal */}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title="Quiz Settings"
+      >
+        <form onSubmit={handleGenerate} className="space-y-6">
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 p-4 rounded-2xl border border-red-100">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Topic</label>
+            <input
+              type="text" value={topic} onChange={(e) => setTopic(e.target.value)}
+              placeholder="e.g. History, Math, Python..." required 
+              className="w-full px-6 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Questions</label>
+              <select 
+                value={numQuestions} onChange={(e) => setNumQuestions(e.target.value)} 
+                className="w-full px-6 py-4 bg-gray-50 border-transparent rounded-2xl outline-none appearance-none cursor-pointer"
+              >
+                <option value="5">5</option><option value="10">10</option><option value="15">15</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Timer (min)</label>
+              <select 
+                value={numMinutes} onChange={(e) => setNumMinutes(e.target.value)} 
+                className="w-full px-6 py-4 bg-gray-50 border-transparent rounded-2xl outline-none appearance-none cursor-pointer"
+              >
+                <option value="5">5m</option><option value="10">10m</option><option value="15">15m</option><option value="20">20m</option>
+              </select>
             </div>
           </div>
-        )}
 
-      </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Difficulty</label>
+            <select 
+              value={difficulty} onChange={(e) => setDifficulty(e.target.value)} 
+              className="w-full px-6 py-4 bg-gray-50 border-transparent rounded-2xl outline-none appearance-none cursor-pointer"
+            >
+              <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
+            </select>
+          </div>
+
+          <button type="submit" disabled={loading} className="w-full py-5 bg-indigo-600 text-white rounded-[25px] font-black shadow-lg hover:shadow-indigo-100 transition-all flex items-center justify-center gap-3">
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              "Generate Exam"
+            )}
+          </button>
+        </form>
+      </Modal>
     </DashboardLayout>
   );
 }

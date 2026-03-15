@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { Inter } from 'next/font/google';
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AI Quiz System",
   description: "AI-powered quiz generation and evaluation platform",
 };
+
+import { QuizProvider } from "@/context/QuizContext";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
@@ -13,7 +18,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-50">{children}</body>
+      <body className={inter.className}>
+        <QuizProvider>
+          {children}
+        </QuizProvider>
+      </body>
     </html>
   );
 }

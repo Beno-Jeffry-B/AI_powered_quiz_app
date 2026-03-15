@@ -26,6 +26,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="text-lg font-bold text-gray-900">AI Quiz System</span>
           </div>
 
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-6 ml-10">
+            <a href="/dashboard" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">
+              Dashboard
+            </a>
+            <a href="/history" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">
+              History
+            </a>
+          </nav>
+
           {/* Logout */}
           <button
             onClick={handleLogout}

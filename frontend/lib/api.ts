@@ -82,3 +82,83 @@ export async function generateQuiz(
   console.log("[api] generateQuiz response:", data);
   return data;
 }
+
+export async function submitQuizAttempt(
+  quizId: string,
+  answers: { question_id: string; selected_option: string }[]
+) {
+  const token = localStorage.getItem("access_token") ?? "";
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/v1/attempts/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ quiz_id: quizId, answers }),
+    });
+  } catch (networkErr) {
+    console.error("[api] Network error:", networkErr);
+    throw new Error("Cannot reach the server. Make sure the backend is running.");
+  }
+
+  if (!res.ok) {
+    let data: Record<string, unknown> = {};
+    try { data = await res.json(); } catch { /* ignore */ }
+    throw new Error((data?.detail as string) || `Request failed (${res.status}).`);
+  }
+
+  return res.json();
+}
+
+export async function getQuizHistory() {
+  const token = localStorage.getItem("access_token") ?? "";
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/v1/quizzes/history/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch (networkErr) {
+    console.error("[api] Network error:", networkErr);
+    throw new Error("Cannot reach the server.");
+  }
+
+  if (!res.ok) {
+    let data: Record<string, unknown> = {};
+    try { data = await res.json(); } catch { /* ignore */ }
+    throw new Error((data?.detail as string) || `Request failed (${res.status}).`);
+  }
+
+  return res.json();
+}
+
+export async function getQuizDetail(quizId: string) {
+  const token = localStorage.getItem("access_token") ?? "";
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/v1/quizzes/${quizId}/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch (networkErr) {
+    console.error("[api] Network error:", networkErr);
+    throw new Error("Cannot reach the server.");
+  }
+
+  if (!res.ok) {
+    let data: Record<string, unknown> = {};
+    try { data = await res.json(); } catch { /* ignore */ }
+    throw new Error((data?.detail as string) || `Request failed (${res.status}).`);
+  }
+
+  return res.json();
+}

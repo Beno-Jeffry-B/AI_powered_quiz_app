@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from apps.quizzes.serializers import GenerateQuizRequestSerializer
 from apps.quizzes.services import QuizService
 from apps.questions.serializers import QuestionSerializer
+from apps.quizzes.models import Quiz
 
 
 class GenerateQuizView(APIView):
@@ -31,17 +32,57 @@ class GenerateQuizView(APIView):
         return Response(serializer.errors, status=400)
 
 
-class QuizListView(APIView):
+class QuizHistoryView(APIView):
     """
-    GET /api/v1/quizzes/
-    Will be implemented in DFD 2.0 — Quiz Generation.
+    GET /api/v1/quizzes/history/
     """
-    pass
+    def get(self, request):
+        quizzes = Quiz.objects.filter(created_by=request.user).order_by("-created_at")
+        history = []
+        
+        for quiz in quizzes:
+            # For this MVP, we take the most recent attempt per quiz
+            attempt = quiz.attempts.filter(user=request.user).order_by("-attempted_at").first()
+            history.append({
+                "quiz_id": str(quiz.id),
+                "topic": quiz.title,
+                "difficulty": quiz.difficulty,
+                "score": attempt.score if attempt else 0,
+                "total_questions": quiz.question_count,
+                "created_at": quiz.created_at.isoformat()
+            })
+            
+        return Response({"quizzes": history})
 
 
 class QuizDetailView(APIView):
     """
     GET /api/v1/quizzes/<quiz_id>/
-    Will be implemented in DFD 2.0 — Quiz Generation.
     """
-    pass
+    def get(self, request, quiz_id):
+        try:
+            quiz = Quiz.objects.get(id=quiz_id, created_by=request.user)
+            questions = quiz.questions.all()
+            
+            # Fetch the latest attempt for this user and quiz
+            attempt = quiz.attempts.filter(user=request.user).order_by("-attempted_at").first()
+            user_answers = {}
+            if attempt:
+                user_answers = {
+                    str(ans.question_id): ans.selected_option 
+                    for ans in attempt.answers.all()
+                }
+
+            # Serialize questions and attach user_selection
+            serialized_qs = QuestionSerializer(questions, many=True).data
+            for q_data in serialized_qs:
+                q_data["user_selection"] = user_answers.get(str(q_data["id"]))
+
+            return Response({
+                "quiz_id": quiz.id,
+                "title": quiz.title,
+                "difficulty": quiz.difficulty,
+                "questions": serialized_qs
+            })
+        except Quiz.DoesNotExist:
+            return Response({"error": "Quiz not found"}, status=404)

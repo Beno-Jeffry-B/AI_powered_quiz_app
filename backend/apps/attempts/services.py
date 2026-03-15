@@ -33,6 +33,10 @@ class AttemptService:
                 selected_option=answer["selected_option"]
             )
 
+        # Auto-evaluate to persist score in the DB for history
+        from apps.evaluation.services import EvaluationService
+        EvaluationService.evaluate_attempt(attempt.id)
+
         return attempt
 
     @staticmethod
