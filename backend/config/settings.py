@@ -6,6 +6,8 @@ Config Module: Project-level settings
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
+from datetime import timedelta
 
 # ---------------------------------------------------------------------------
 # Base Paths
@@ -17,16 +19,16 @@ load_dotenv(BASE_DIR / ".env")
 # ---------------------------------------------------------------------------
 # Security
 # ---------------------------------------------------------------------------
-SECRET_KEY = os.environ.get("SECRET_KEY", "changeme-use-dotenv-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-secret-key")
 
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+
 # ---------------------------------------------------------------------------
 # Application Definition
 # ---------------------------------------------------------------------------
 INSTALLED_APPS = [
-    # Django built-ins
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -34,17 +36,17 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Third-party
+    # third-party
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
 
-    # Project apps  (DFD modules)
-    "apps.users",        # DFD 1.0 — User Authentication
-    "apps.quizzes",      # DFD 2.0 — Generate Quiz
-    "apps.questions",    # DFD 3.0 — Retrieve Quiz Questions
-    "apps.attempts",     # DFD 4.0 — Submit Quiz Attempt
-    "apps.evaluation",   # DFD 5.0 — Evaluate Answers
+    # project apps
+    "apps.users",
+    "apps.quizzes",
+    "apps.questions",
+    "apps.attempts",
+    "apps.evaluation",
 ]
 
 MIDDLEWARE = [
@@ -78,22 +80,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-import dj_database_url
-
 # ---------------------------------------------------------------------------
 # Database — PostgreSQL (Render) or SQLite (Local)
 # ---------------------------------------------------------------------------
 DATABASES = {
     "default": dj_database_url.config(
-        default="sqlite:///db.sqlite3",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
-        ssl_require=not DEBUG
-
+        ssl_require=not DEBUG,
     )
 }
 
 # ---------------------------------------------------------------------------
-# Custom User Model — DFD 1.0 User Authentication
+# Custom User Model
 # ---------------------------------------------------------------------------
 AUTH_USER_MODEL = "users.User"
 
@@ -116,17 +115,15 @@ REST_FRAMEWORK = {
 }
 
 # ---------------------------------------------------------------------------
-# JWT Settings (will be used in DFD 1.0)
+# JWT Settings
 # ---------------------------------------------------------------------------
-from datetime import timedelta
-
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME":  timedelta(minutes=60),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
 # ---------------------------------------------------------------------------
-# CORS (allow Next.js frontend during development)
+# CORS & CSRF (Render + Vercel Safe)
 # ---------------------------------------------------------------------------
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
@@ -135,13 +132,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
-if FRONTEND_URL:
+if FRONTEND_URL and FRONTEND_URL.startswith("http"):
     CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
-
 
 CORS_ALLOW_CREDENTIALS = True
 
+CSRF_TRUSTED_ORIGINS = []
 
+if FRONTEND_URL and FRONTEND_URL.startswith("http"):
+    CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
 # ---------------------------------------------------------------------------
 # Password Validation
@@ -169,11 +168,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
-
+# ---------------------------------------------------------------------------
+# External APIs
+# ---------------------------------------------------------------------------
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-
-CSRF_TRUSTED_ORIGINS = [
-    os.getenv("FRONTEND_URL")
-] if os.getenv("FRONTEND_URL") else []
