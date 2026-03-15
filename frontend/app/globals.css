@@ -30,3 +30,15 @@
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 }
+
+/* Suppress browser-injected password reveal buttons */
+input.password-input::-ms-reveal,
+input.password-input::-ms-clear {
+  display: none;
+}
+
+input.password-input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+}

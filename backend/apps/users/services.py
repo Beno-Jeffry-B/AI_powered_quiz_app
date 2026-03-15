@@ -14,12 +14,20 @@ class UserService:
     """
 
     @staticmethod
-    def register_user(validated_data: dict):
+    def register_user(email: str, password: str):
         """
         DFD 1.0 — Process 1.1: Register User
-        TODO: Hash password, create User record, return tokens.
+        Creates the user with a hashed password and returns JWT tokens.
         """
-        raise NotImplementedError("Implement in DFD 1.0 Authentication module.")
+        if User.objects.filter(email=email).exists():
+            raise ValueError("A user with this email already exists.")
+
+        user = User.objects.create_user(
+            email=email,
+            username=email,   # use email as username fallback
+            password=password
+        )
+        return user
 
     @staticmethod
     def login_user(email: str, password: str):

@@ -21,7 +21,22 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        return not_implemented_response("User registration")
+        email    = request.data.get("email", "").strip()
+        password = request.data.get("password", "")
+
+        if not email or not password:
+            return Response({"detail": "Email and password are required."}, status=400)
+
+        try:
+            user   = UserService.register_user(email=email, password=password)
+            tokens = UserService.generate_auth_tokens(user)
+            return Response({
+                "message": "Registration successful",
+                "access":  tokens["access_token"],
+                "refresh": tokens["refresh_token"],
+            }, status=201)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=400)
 
 
 # DFD 1.0 — Process 1.2: Login User

@@ -30,3 +30,12 @@ CODEBASE_SUMMARY.txt
 generate_summary.py
 raw_analysis.txt
 scan_project.py
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env*.local
+frontend/.vercel
+frontend/*.tsbuildinfo
