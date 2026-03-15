@@ -1,14 +1,12 @@
-"""
-DFD 5.0 — Evaluate Answers
-Views will be implemented in this module.
-"""
-
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from apps.evaluation.services import EvaluationService
 
 
-class EvaluationResultView(APIView):
+class EvaluateAttemptView(APIView):
     """
-    GET /api/v1/evaluation/result/<attempt_id>/
-    Will be implemented in DFD 5.0 — Evaluate Answers.
+    GET /api/v1/evaluation/<attempt_id>/
     """
-    pass
+    def get(self, request, attempt_id):
+        result = EvaluationService.evaluate_attempt(attempt_id)
+        return Response(result)
