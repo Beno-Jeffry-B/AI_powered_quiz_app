@@ -2,7 +2,10 @@
 
 > An intelligent quiz platform powered by AI — generate, attempt, evaluate, and track quizzes seamlessly.
 
----
+
+🌐 **Live Application:**  
+https://ai-powered-quiz-app-rosy.vercel.app/
+
 
 ## Overview
 
