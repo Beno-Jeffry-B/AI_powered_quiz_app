@@ -1,6 +1,8 @@
 """
 Users Services — DFD 1.0 User Authentication
 """
+from rest_framework.exceptions import AuthenticationFailed
+from apps.users.models import User
 
 # DFD 1.0 — Business logic layer for user authentication
 class UserService:
@@ -24,6 +26,18 @@ class UserService:
         TODO: Verify credentials, return JWT access + refresh tokens.
         """
         raise NotImplementedError("Implement in DFD 1.0 Authentication module.")
+
+    @staticmethod
+    def verify_user(email: str, password: str):
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise AuthenticationFailed("Invalid email or password")
+            
+        if not user.check_password(password):
+            raise AuthenticationFailed("Invalid email or password")
+            
+        return user
 
     @staticmethod
     def get_user_profile(user_id: str):
