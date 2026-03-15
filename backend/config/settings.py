@@ -7,8 +7,6 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
-
 # ---------------------------------------------------------------------------
 # Base Paths
 # ---------------------------------------------------------------------------
@@ -23,8 +21,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "changeme-use-dotenv-in-production")
 
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 # ---------------------------------------------------------------------------
 # Application Definition
 # ---------------------------------------------------------------------------
@@ -89,7 +86,9 @@ import dj_database_url
 DATABASES = {
     "default": dj_database_url.config(
         default="sqlite:///db.sqlite3",
-        conn_max_age=600
+        conn_max_age=600,
+        ssl_require=not DEBUG
+
     )
 }
 
@@ -129,10 +128,20 @@ SIMPLE_JWT = {
 # ---------------------------------------------------------------------------
 # CORS (allow Next.js frontend during development)
 # ---------------------------------------------------------------------------
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+
+if FRONTEND_URL:
+    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+
+
+CORS_ALLOW_CREDENTIALS = True
+
+
 
 # ---------------------------------------------------------------------------
 # Password Validation
@@ -163,3 +172,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+
+CSRF_TRUSTED_ORIGINS = [
+    os.getenv("FRONTEND_URL")
+] if os.getenv("FRONTEND_URL") else []
