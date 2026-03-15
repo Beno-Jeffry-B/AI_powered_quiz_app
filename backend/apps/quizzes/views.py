@@ -4,14 +4,23 @@ Views will be implemented in this module.
 """
 
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from apps.quizzes.serializers import GenerateQuizRequestSerializer
 
 
-class QuizGenerateView(APIView):
+class GenerateQuizView(APIView):
     """
     POST /api/v1/quizzes/generate/
     Will be implemented in DFD 2.0 — Quiz Generation.
     """
-    pass
+    def post(self, request):
+        serializer = GenerateQuizRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response({
+                "message": "Quiz parameters received",
+                "data": serializer.validated_data
+            })
+        return Response(serializer.errors, status=400)
 
 
 class QuizListView(APIView):
