@@ -6,6 +6,7 @@ Views will be implemented in this module.
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from apps.quizzes.serializers import GenerateQuizRequestSerializer
+from apps.quizzes.services import QuizService
 
 
 class GenerateQuizView(APIView):
@@ -16,9 +17,10 @@ class GenerateQuizView(APIView):
     def post(self, request):
         serializer = GenerateQuizRequestSerializer(data=request.data)
         if serializer.is_valid():
+            metadata = QuizService.generate_quiz_metadata(serializer.validated_data)
             return Response({
-                "message": "Quiz parameters received",
-                "data": serializer.validated_data
+                "message": "Quiz metadata generated",
+                "metadata": metadata
             })
         return Response(serializer.errors, status=400)
 
