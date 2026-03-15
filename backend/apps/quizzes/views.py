@@ -20,10 +20,11 @@ class GenerateQuizView(APIView):
             metadata = QuizService.generate_quiz_metadata(serializer.validated_data)
             quiz = QuizService.store_quiz_metadata(request.user, metadata)
             questions = QuizService.generate_question_set(metadata)
+            QuizService.store_generated_questions(quiz, questions)
+            
             return Response({
-                "message": "Quiz generated",
-                "quiz_id": quiz.id,
-                "questions": questions
+                "message": "Quiz generated successfully",
+                "quiz_id": quiz.id
             })
         return Response(serializer.errors, status=400)
 

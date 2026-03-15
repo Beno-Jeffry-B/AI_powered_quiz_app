@@ -8,6 +8,7 @@ from django.conf import settings
 from groq import Groq
 
 from apps.quizzes.models import Quiz
+from apps.questions.models import Question
 
 
 class QuizService:
@@ -100,6 +101,32 @@ Format:
             ]
 
         return questions
+
+    @staticmethod
+    def store_generated_questions(quiz, questions):
+        """
+        DFD 2.5 — Store Generated Questions in DB
+        """
+        created_questions = []
+        for q in questions:
+            # Ensure options exist before indexing
+            options = q.get("options", ["", "", "", ""])
+            # Pad options if less than 4
+            while len(options) < 4:
+                options.append("")
+            
+            question_obj = Question.objects.create(
+                quiz=quiz,
+                question_text=q.get("question", ""),
+                option_a=options[0],
+                option_b=options[1],
+                option_c=options[2],
+                option_d=options[3],
+                correct_answer=q.get("answer", "")
+            )
+            created_questions.append(question_obj)
+        
+        return created_questions
 
     @staticmethod
     def generate_quiz(user, topic, difficulty, num_questions):
