@@ -4,9 +4,9 @@ Mounted at: /api/v1/attempts/
 """
 
 from django.urls import path
-from apps.attempts.views import SubmitAttemptView, AttemptHistoryView
+from apps.attempts.views import SubmitQuizAttemptView, AttemptHistoryView
 
 urlpatterns = [
-    path("submit/",  SubmitAttemptView.as_view(),  name="attempt-submit"),   # DFD 4.1
-    path("history/", AttemptHistoryView.as_view(), name="attempt-history"),  # DFD 4.2
+    path("",         SubmitQuizAttemptView.as_view(), name="submit-attempt"), # DFD 4.1
+    path("history/", AttemptHistoryView.as_view(),    name="attempt-history"), # DFD 4.2
 ]
