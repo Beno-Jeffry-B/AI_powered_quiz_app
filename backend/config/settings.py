@@ -23,7 +23,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "changeme-use-dotenv-in-production")
 
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = ["*"]
 
 # ---------------------------------------------------------------------------
 # Application Definition
@@ -81,17 +81,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+import dj_database_url
+
 # ---------------------------------------------------------------------------
-# Database — PostgreSQL  (DFD: All modules share one DB)
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
-# Database — SQLite (for development)
+# Database — PostgreSQL (Render) or SQLite (Local)
 # ---------------------------------------------------------------------------
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default="sqlite:///db.sqlite3",
+        conn_max_age=600
+    )
 }
 
 # ---------------------------------------------------------------------------
@@ -157,6 +156,7 @@ USE_TZ = True
 # Static Files
 # ---------------------------------------------------------------------------
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
