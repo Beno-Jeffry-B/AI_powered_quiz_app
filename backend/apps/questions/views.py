@@ -20,3 +20,13 @@ class RetrieveQuizQuestionsView(APIView):
             "quiz_id": quiz_id,
             "questions": serializer.data
         })
+
+
+class RetrieveQuestionDetailView(APIView):
+    """
+    GET /api/v1/questions/<question_id>/
+    """
+    def get(self, request, question_id):
+        question = QuestionService.get_question_by_id(question_id)
+        serializer = QuestionSerializer(question)
+        return Response(serializer.data)
