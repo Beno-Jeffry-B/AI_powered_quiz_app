@@ -4,6 +4,8 @@ Users Views — DFD 1.0 User Authentication
 
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from apps.users.serializers import LoginRequestSerializer
 from core.utils import not_implemented_response
 
 
@@ -32,7 +34,16 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        return not_implemented_response("User login")
+        serializer = LoginRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response({
+                "message": "Credentials received",
+                "data": {
+                    "email": serializer.validated_data["email"],
+                    "password": serializer.validated_data["password"]
+                }
+            })
+        return Response(serializer.errors, status=400)
 
 
 # DFD 1.0 — Process 1.3: Get User Profile
