@@ -2,6 +2,7 @@
 DFD 2.0 — Quiz Generation
 Services will be implemented in this module.
 """
+from apps.quizzes.models import Quiz
 
 
 class QuizService:
@@ -21,6 +22,17 @@ class QuizService:
             "question_count": number_of_questions,
             "status": "pending"
         }
+
+    @staticmethod
+    def store_quiz_metadata(user, metadata):
+        quiz = Quiz.objects.create(
+            created_by=user,
+            title=metadata["title"],
+            difficulty=metadata["difficulty"],
+            question_count=metadata["question_count"],
+            status=metadata["status"]
+        )
+        return quiz
 
     @staticmethod
     def generate_quiz(user, topic, difficulty, num_questions):

@@ -12,9 +12,11 @@ class Quiz(models.Model):
 
     ER Fields:
     id (PK)
-    user_id (FK)
-    topic
+    created_by (FK)
+    title
     difficulty
+    question_count
+    status
     created_at
     """
 
@@ -26,20 +28,27 @@ class Quiz(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    user = models.ForeignKey(
+    created_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="quizzes"
     )
 
-    topic = models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
 
     difficulty = models.CharField(
         max_length=10,
         choices=DIFFICULTY_CHOICES
     )
 
+    question_count = models.IntegerField(default=5)
+
+    status = models.CharField(
+        max_length=20,
+        default="pending"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.topic} - {self.difficulty}"
+        return f"{self.title} - {self.difficulty}"
