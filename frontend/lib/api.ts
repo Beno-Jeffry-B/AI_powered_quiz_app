@@ -10,7 +10,6 @@ async function apiFetch(url: string, body: object) {
       body: JSON.stringify(body),
     });
   } catch (networkErr) {
-    // fetch() itself threw — network down, CORS preflight failure, wrong port, etc.
     console.error("[api] Network error:", networkErr);
     throw new Error(
       "Cannot reach the server. Make sure the backend is running on port 8000."
@@ -22,7 +21,7 @@ async function apiFetch(url: string, body: object) {
     try {
       data = await res.json();
     } catch {
-      // body isn't JSON — ignore
+      // ignore
     }
     console.error("[api] Server error:", res.status, data);
     const message =
@@ -33,7 +32,9 @@ async function apiFetch(url: string, body: object) {
     throw new Error(message);
   }
 
-  return res.json();
+  const data = await res.json();
+  console.log(`[api] ${url} response:`, data);
+  return data;
 }
 
 export async function signup(email: string, password: string) {
@@ -42,4 +43,42 @@ export async function signup(email: string, password: string) {
 
 export async function login(email: string, password: string) {
   return apiFetch(`${API_BASE}/api/v1/auth/login/`, { email, password });
+}
+
+export async function generateQuiz(
+  topic: string,
+  number_of_questions: number,
+  difficulty: string
+) {
+  const token = localStorage.getItem("access_token") ?? "";
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/v1/quizzes/generate/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ topic, number_of_questions, difficulty }),
+    });
+  } catch (networkErr) {
+    console.error("[api] Network error:", networkErr);
+    throw new Error("Cannot reach the server. Make sure the backend is running.");
+  }
+
+  if (!res.ok) {
+    let data: Record<string, unknown> = {};
+    try { data = await res.json(); } catch { /* ignore */ }
+    console.error("[api] Server error:", res.status, data);
+    const message =
+      (data?.detail as string) ||
+      (data?.message as string) ||
+      `Request failed (${res.status}).`;
+    throw new Error(message);
+  }
+
+  const data = await res.json();
+  console.log("[api] generateQuiz response:", data);
+  return data;
 }
