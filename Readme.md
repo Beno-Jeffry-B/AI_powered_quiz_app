@@ -17,18 +17,24 @@
 > 📌 ![ER Diagram](https://github.com/Beno-Jeffry-B/AI_powered_quiz_app/blob/9ad390fd186cd588b59586339f1a040c0dd63f30/docs/ER.png)
 
 ## 3. System Overview
-The system follows a streamlined workflow:
-1. **User Authentication:** Users register and log in to the system.
-2. **Quiz Generation:** Users request a new quiz by providing a topic, difficulty level, and desired number of questions.
-3. **AI Integration:** The backend sends a structured prompt to the Groq API.
-4. **Attempt:** Once the AI responds, the quiz metadata and questions are stored, and the user is redirected to the active exam interface.
-5. **Evaluation & Score Tracking:** The user submits their chosen answers. The system evaluates them against the correct answers and stores the `QuizAttempt` and corresponding `UserAnswer`s, making past attempts viewable.
+I didn't just start typing code; I intentionally **spent a good number of hours designing the system first**. I learned the importance of this phase during my **previous internship**, where I worked closely with the founder. He taught me that for complex projects, getting the architecture right on paper saves days of debugging later. During that rough work phase, I sketched out the DFD and ER diagrams to get the logic right. And after I used **Gemini (Nano Banana)** to help me convert those rough designs into a structured database schema and ERD. The **DFD structure basically guided the entire application architecture**, leading to a clean, modular build.
+
+The strategy is simple but effective: I don't touch the UI until the backend is bulletproof.
+
+This approach made development much more meaningful. It ensures that I stay strictly within the **project scope** since the scope is defined in the DFD, I don't drag or spend time on unnecessary requirements.
+
+Here’s how the process flows now:
+1. **User Authentication:** Simple signup/login to keep track of your quizzes.
+2. **Quiz Generation Request:** You tell the app what you want to learn.
+3. **Backend Calling Groq API:** The server hits the Groq API to get high-quality questions.
+4. **Quiz Attempt Interface:** A polished UI where you actually take the test.
+5. **Evaluation and Score Tracking:** The system grades you and logs the attempt so you can see your progress.
 
 ## 4. Architecture
-- **Frontend:** Built with Next.js (App Router), leveraging React state and context (`QuizContext`) to manage the active exam state and visual timers. The UI is built using TailwindCSS for modern, responsive components.
-- **Backend:** A modular Django application strictly divided by domain logic (`users`, `quizzes`, `questions`, `attempts`, `evaluation`), utilizing Django REST Framework (DRF) for API endpoints.
-- **Database:** Relational schema using Django ORM. Configured with SQLite natively, but includes dependencies (`psycopg2-binary`) for PostgreSQL readiness.
-- **AI Components:** Uses the Groq Python SDK for lightning-fast inference, specifically integrating the `llama-3.3-70b-versatile` model.
+- **Frontend:** Built with Next.js (App Router). I used React state and context (`QuizContext`) to manage the exam flow and those annoying but necessary timers. Styled with TailwindCSS for a premium feel.
+- **Backend:** I spent a lot of time planning this to ensure a **clean separation of concerns**. The **DFD modules were translated directly into backend modules and services** (users, quizzes, questions, etc.), making it easy to maintain.
+- **Database:** I started with **SQLite for quick testing and development**, but later **migrated to Render PostgreSQL for production readiness**. PostgreSQL is just way better for scalability and reliability in a real-world deployment.
+- **AI Components:** Using the Groq SDK with the `llama-3.3-70b-versatile` model. It’s incredibly fast, which is crucial for a smooth user experience.
 
 ## 5. Tech Stack
 **Frontend:**
@@ -96,13 +102,14 @@ By default, the application runs on an SQLite database (`db.sqlite3`). If you wa
    npm run dev
    ```
 
-## 7. Database Design Decisions
-The relational schema uses UUIDs as primary keys to prevent users from guessing the IDs of other quizzes or attempts. Major models:
-- **`User`:** Custom model extending `AbstractUser` that uses email as the primary authentication field.
-- **`Quiz`:** Stores the overarching generation metadata (topic, difficulty, total questions, status).
-- **`Question`:** Belongs to a specific Quiz. Denormalizes the options into four specific fields (`option_a`, `option_b`, `option_c`, `option_d`) with exactly one `correct_answer` to enforce multiple-choice constraints.
-- **`QuizAttempt`:** Ties a User to a Quiz, capturing their final computed `score` and the `attempted_at` timestamp.
-- **`UserAnswer`:** Tracks individual selections made during an attempt and whether that selection was mathematically correct.
+## 7. Database Models
+The schema is designed to be secure and scalable. I used UUIDs for primary keys so people can't just guess URLs to find other users' quizzes.
+
+- **`User`:** Custom model using email for login.
+- **`Quiz`:** Stores the topic, difficulty, and AI generation status.
+- **`Question`:** Each quiz has its own set of questions with four options and one correct answer.
+- **`QuizAttempt`:** Logs every time a user takes a quiz, tracking the final score.
+- **`UserAnswer`:** Records exactly what the user picked for each question.
 
 ## 8. API Structure
 Key RESTful endpoints driving the application:
@@ -122,37 +129,52 @@ The core brain of the application resides in `QuizService.generate_question_set(
 - **Parsing constraint:** The AI is strictly instructed to return valid JSON with a specific structure: an array of objects, containing `question`, exactly 4 `options`, and an `answer`.
 
 ## 10. Development Workflow
-The backend architecture follows a strict Domain-Driven Design (DFD) workflow to enforce separation of concerns:
-- **DFD 1.0:** User Authentication
-- **DFD 2.0:** Quiz Generation (Views, Services, and AI logic)
-- **DFD 4.0:** Submit Quiz Attempt
-All code routes through DRF Views to a `services.py` containing the business logic, which in turn manipulates the `models.py`.
 
-## 11. Challenges Faced
+I followed a focused, backend first strategy that allowed me to maintain a clean architecture and stay strictly within the **project scope**. By defining the scope clearly in the DFD and ERD, I avoided "scope creep" and spent my time only on necessary requirements.
+
+My process followed this strict sequence:
+1. **ERD and Model Creation**: I started by designing the database schema and verifying the relationships.
+2. **Module-by-Module Backend Implementation**: Once the models were solid, I implemented the DFD endpoints module by module and sub-process by sub-process. This was purely backend work.
+3. **Verification and Commits**: After implementing each module, I verified all endpoints and edge cases, committing the work only after I was certain it was robust.
+4. **Frontend Connection**: Only after checking every backend endpoint did I dive into the frontend connection and UI work.
+
+Working this way made the UI phase much easier because I could focus entirely on the interface without worrying about the underlying logic. Simultaneous full-stack development can often become tedious and fragmented, whereas this focused approach kept the development meaningful and efficient.
+
+The breakdown looked like this:
+- **DFD 1.0 & 1.1:** User Authentication and validations.
+- **DFD 2.0:** Quiz Generation logic and services.
+- **DFD 3.0:** Question handling.
+- **DFD 4.0:** Quiz attempt submission.
+- **DFD 5.0:** Evaluation and scoring.
+
+Each of these was translated into actual backend functions. I also stayed disciplined with my **GitHub commit history**, creating a transparent and traceable log. Instead of a separate documentation file, my **commit messages act as the development log**.
+
+The project was developed across multiple branches (`1.0`, `2.0`, `3.0`, `4.0`, `5.0`), with sub-modules like `1.1` or `2.1` handled individually. 
+
+
+## 11. A Note on Documentation
+Due to time constraints, I didn't create a separate Word doc. I figured a clean, meaningful commit history is much more useful for a developer anyway it lets you see exactly how the project evolved. It gives a transparent and traceable development workflow without the overhead of static files.
+
+## 12. Challenges Faced
 - **AI Response Formatting:** Ensuring an LLM continuously returns valid, parsable JSON without adding conversational preamble or markdown codeblocks natively.
 - **Quiz Evaluation Consistency:** Keeping the client mathematically decoupled from the answer key. If the frontend checked the answers, tech-savvy users could inspect correct answers via the network tab.
 - **AI Latency:** Typical AI requests can take 10+ seconds, leaving the user staring at a blank screen.
 - **Schema Design:** Tracking multiple disjointed choices securely without allowing a user to submit duplicate attempts trivially.
 
-## 12. Solutions Implemented
+## 13. Solutions Implemented
 - **AI Formatting Recovery:** Implemented a `try-except json.loads(content)` fallback strategy. If the AI model hallucinates or provides invalid data, a basic empty placeholder is created so the backend doesn't crash the UI with a 500 error.
 - **Server-Side Scoring:** The client merely POSTs a `<question_id>: <selected_option>` map. The backend compares these against the `Question` model, calculates the score in isolation, creates the `UserAnswer` rows, and returns just the final integer result.
 - **Groq LPU Engine + UX Skeletons:** Utilizing Groq specifically for `llama-3.3-70b-versatile` guarantees significantly faster inference times over traditional LLM APIs. The next.js frontend integrates a beautifully animated `QuestionSkeleton` to gracefully hold the user's attention during generation.
 
-## 13. Features Implemented
+## 14. Features Implemented
 - User Models & Database schemas mapped out
 - Core Quiz generation backend using Groq API
 - Fetching quizzes with filtered history
 - Next.js frontend exam runner with dynamic UI states and sticky navigation
 - Basic backend Attempt tracking and decoupled answer processing
 
-## 14. Features Skipped (and Why)
-- **Detailed Attempt History View:** `AttemptHistoryView` remains a placeholder view as of the MVP window to prioritize generation logic.
-- **Leaderboards / Social Sharing:** Withheld to maintain scope and get the primary generation and attempt engines stable.
-- **Complex Question Typings:** Only 4-option multiple-choice questions are supported. True/False and multi-select formats would require significant schema alterations to `Question`.
-
-## 15. Future Improvements
-- Implement frontend charting functionality to visualize scores over time.
-- Implement the comprehensive `/api/v1/attempts/history/` logic.
-- Build resilient retry logic within the AI parser to re-prompt the LLM automatically if it fails to issue valid JSON.
-- Expand support for varied question styles (boolean, fill-in-the-blank).
+## 15. Features Skipped (and Why)
+- **Detailed Attempt History View:** `AttemptHistoryView` is still a placeholder while I prioritized the generation engine.
+- **Leaderboards / Social Sharing:** Shelved for now to keep the scope tight.
+- **Complex Question Types:** Stuck to 4-option MCQs for the MVP. Adding True/False or Fill-in-the-blanks would require some database refactoring.
+- **Forgot Password Feature:** Implementing this properly requires a reliable email service integration for reset links. I considered Google OAuth as an alternative, but didn't have the time to finish it. I know how to implement it, but for this version, it's on the back burner.
