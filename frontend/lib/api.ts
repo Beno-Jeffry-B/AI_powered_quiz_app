@@ -3,7 +3,11 @@
 // ===============================
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-async function callAPI(endpoint, method = "GET", data = null) {
+async function callAPI(
+  endpoint: string,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+  data: any = null
+) {
 
   // 1. Get token (if user logged in)
   let token = null;
