@@ -16,7 +16,7 @@ async function callAPI(
   }
 
   // 2. Setup headers
-  const headers = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
 
