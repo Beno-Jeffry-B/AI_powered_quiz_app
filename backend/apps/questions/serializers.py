@@ -4,8 +4,16 @@ from apps.questions.models import Question
 
 class QuestionSerializer(serializers.ModelSerializer):
     """
-    Serializer for quiz questions (excluding answer).
+    Serializer for quiz questions (excluding correct answer).
     """
+
     class Meta:
         model = Question
-        fields = ["id", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_answer"]
+        fields = [
+            "id",
+            "question_text",
+            "option_a",
+            "option_b",
+            "option_c",
+            "option_d",
+        ]

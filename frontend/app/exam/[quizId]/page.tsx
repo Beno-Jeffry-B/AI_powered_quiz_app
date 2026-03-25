@@ -13,11 +13,11 @@ export default function ExamPage() {
   const { quizId } = useParams();
   const router = useRouter();
   const { toast, showToast, hideToast } = useToast();
-  const { 
-    activeQuiz, 
-    selectedAnswers, 
-    currentIndex, 
-    timeLeft, 
+  const {
+    activeQuiz,
+    selectedAnswers,
+    currentIndex,
+    timeLeft,
     isFinished,
     startQuiz,
     setAnswer,
@@ -29,6 +29,9 @@ export default function ExamPage() {
 
   const [loading, setLoading] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  // ✅ ADDED: store backend result
+  const [result, setResult] = useState<any>(null);
+
 
   // Load quiz if not active or different ID
   useEffect(() => {
@@ -58,12 +61,16 @@ export default function ExamPage() {
         question_id: qId,
         selected_option: option,
       }));
-      
+
       const { submitQuizAttempt } = await import("@/lib/api");
-      await submitQuizAttempt(quizId as string, answers);
-      
+
+      const response = await submitQuizAttempt(quizId as string, answers);
+
+      setResult(response);
+
       finishQuiz();
       setShowResult(true);
+
     } catch (err: any) {
       showToast(err.message || "Failed to submit quiz.", "error");
     } finally {
@@ -71,23 +78,17 @@ export default function ExamPage() {
     }
   };
 
-  const calculateScore = () => {
-    if (!activeQuiz) return 0;
-    return activeQuiz.questions.reduce((acc, q) => {
-      return acc + (selectedAnswers[q.id] === q.correct_answer ? 1 : 0);
-    }, 0);
-  };
 
   if (loading) {
     return (
       <DashboardLayout>
         <div className="max-w-3xl mx-auto py-8 px-4">
           <div className="flex items-center justify-between mb-10">
-             <div className="space-y-2">
-               <div className="w-48 h-8 bg-gray-200 animate-pulse rounded-lg" />
-               <div className="w-32 h-4 bg-gray-100 animate-pulse rounded-lg" />
-             </div>
-             <div className="w-32 h-12 bg-gray-100 animate-pulse rounded-2xl" />
+            <div className="space-y-2">
+              <div className="w-48 h-8 bg-gray-200 animate-pulse rounded-lg" />
+              <div className="w-32 h-4 bg-gray-100 animate-pulse rounded-lg" />
+            </div>
+            <div className="w-32 h-12 bg-gray-100 animate-pulse rounded-2xl" />
           </div>
           <div className="w-full h-3 bg-gray-100 rounded-full mb-12" />
           <QuestionSkeleton />
@@ -104,8 +105,8 @@ export default function ExamPage() {
           <div className="bg-red-50 text-red-600 p-8 rounded-[40px] border border-red-100 mb-8">
             <h2 className="text-2xl font-black mb-4">Exam Not Found</h2>
             <p className="font-bold opacity-80 mb-6 text-sm uppercase tracking-widest">The quiz could not be loaded or doesn't exist.</p>
-            <button 
-              onClick={() => router.push('/dashboard')} 
+            <button
+              onClick={() => router.push('/dashboard')}
               className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-red-700 transition-all active:scale-95"
             >
               Back to Dashboard
@@ -127,7 +128,7 @@ export default function ExamPage() {
   return (
     <DashboardLayout>
       <div className="max-w-3xl mx-auto py-8 px-4 pb-32">
-        
+
         {/* Exam Header */}
         <div className="flex items-center justify-between mb-10">
           <div>
@@ -150,7 +151,7 @@ export default function ExamPage() {
 
         {/* Progress Bar */}
         <div className="w-full h-3 bg-gray-100 rounded-full mb-12 overflow-hidden shadow-inner">
-          <div 
+          <div
             className="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${((currentIndex + 1) / activeQuiz.questions.length) * 100}%` }}
           />
@@ -159,7 +160,7 @@ export default function ExamPage() {
         {/* Question Card */}
         <div className="bg-white rounded-[40px] shadow-xl shadow-indigo-100/50 border border-gray-100 p-10 md:p-14 mb-10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 opacity-50" />
-          
+
           <h2 className="text-xl md:text-2xl font-bold text-gray-800 leading-relaxed mb-10 relative z-10">
             {currentQuestion.question_text}
           </h2>
@@ -175,8 +176,8 @@ export default function ExamPage() {
                   key={label}
                   onClick={() => setAnswer(currentQuestion.id, label)}
                   className={`w-full text-left flex items-center gap-5 p-5 md:p-6 rounded-3xl border-2 transition-all duration-200 group
-                    ${isSelected 
-                      ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-200' 
+                    ${isSelected
+                      ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-200'
                       : 'bg-white border-gray-100 hover:border-indigo-200 hover:bg-gray-50'}`}
                 >
                   <span className={`flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm transition-colors
@@ -239,13 +240,13 @@ export default function ExamPage() {
         </div>
       </div>
 
-      <ResultModal 
+      <ResultModal
         isOpen={showResult || isFinished}
         onClose={() => {
           setShowResult(false);
         }}
-        score={calculateScore()}
-        total={activeQuiz.questions.length}
+        score={result?.score || 0}
+        total={result?.total_questions || activeQuiz.questions.length}
         onRetake={() => {
           const quiz = activeQuiz;
           resetProgress();
@@ -256,10 +257,10 @@ export default function ExamPage() {
       />
 
       {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={hideToast} 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
         />
       )}
     </DashboardLayout>

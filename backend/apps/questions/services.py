@@ -7,14 +7,14 @@ class QuestionService:
     Business logic for fetching quiz questions.
     """
 
-    @staticmethod
+    @classmethod
     def get_questions_by_quiz(quiz_id):
         """
         DFD 3.1 — Retrieve questions for a specific quiz.
         """
         return Question.objects.filter(quiz_id=quiz_id)
 
-    @staticmethod
+    @classmethod
     def get_question_by_id(question_id):
         """
         DFD 3.2 — Retrieve details for a specific question.

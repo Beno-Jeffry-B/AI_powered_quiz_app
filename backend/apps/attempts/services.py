@@ -1,23 +1,15 @@
 from apps.attempts.models import QuizAttempt, UserAnswer
 from apps.quizzes.models import Quiz
+from apps.questions.models import Question
 
 
 class AttemptService:
-    """
-    Business logic for quiz attempt submission and history.
-    """
 
-    @staticmethod
-    def submit_quiz_attempt(user, quiz_id, answers):
-        """
-        DFD 4.2 – Create Quiz Attempt Record
-        DFD 4.3 – Store Attempt Metadata
-        DFD 4.4 – Store User Answers
-        """
-        # Step 4.3: Fetch quiz to get metadata (question_count)
+    @classmethod
+    def submit_quiz_attempt(cls, user, quiz_id, answers):
+
         quiz = Quiz.objects.get(id=quiz_id)
 
-        # Step 4.2 & 4.3: Create attempt record with metadata
         attempt = QuizAttempt.objects.create(
             user=user,
             quiz=quiz,
@@ -25,20 +17,16 @@ class AttemptService:
             status="completed"
         )
 
-        # Step 4.4: Store user answers
         for answer in answers:
+            question = Question.objects.get(id=answer["question_id"])
+
             UserAnswer.objects.create(
                 attempt=attempt,
-                question_id=answer["question_id"],
+                question=question,
                 selected_option=answer["selected_option"]
             )
 
-        # Auto-evaluate to persist score in the DB for history
         from apps.evaluation.services import EvaluationService
-        EvaluationService.evaluate_attempt(attempt.id)
-
-        return attempt
-
-    @staticmethod
-    def get_attempt_history(user):
-        raise NotImplementedError("DFD 4.0 not implemented yet.")
+        result = EvaluationService.evaluate_attempt(attempt.id)
+        attempt.refresh_from_db()
+        return attempt, result

@@ -1,6 +1,5 @@
 """
 DFD 2.0 — Quiz Generation
-Services layer for quiz generation logic.
 """
 
 import json
@@ -13,33 +12,37 @@ from apps.questions.models import Question
 
 class QuizService:
     """
-    Business logic for quiz generation and retrieval.
+    Handles quiz generation logic.
     """
 
-    @staticmethod
-    def generate_quiz_metadata(validated_data):
-        """
-        DFD 2.2 — Generate Quiz Metadata
-        """
-        topic = validated_data.get("topic")
-        difficulty = validated_data.get("difficulty")
-        number_of_questions = validated_data.get("number_of_questions")
-        time_limit = validated_data.get("time_limit", 5)
+    @classmethod
+    def generate_quiz(cls, user, validated_data):
+        metadata = cls.generate_quiz_metadata(validated_data)
 
+        quiz = cls.store_quiz_metadata(user, metadata)
+
+        questions = cls.generate_question_set(metadata)
+
+        if not questions:
+            raise ValueError("Failed to generate questions. Please try again.")
+
+        stored_questions = cls.store_generated_questions(quiz, questions)
+
+        return quiz, stored_questions
+
+    @classmethod
+    def generate_quiz_metadata(cls, validated_data):
         return {
-            "title": topic,
-            "difficulty": difficulty,
-            "question_count": number_of_questions,
-            "time_limit": time_limit,
+            "title": validated_data.get("topic"),
+            "difficulty": validated_data.get("difficulty"),
+            "question_count": validated_data.get("number_of_questions"),
+            "time_limit": validated_data.get("time_limit", 5),
             "status": "pending"
         }
 
-    @staticmethod
-    def store_quiz_metadata(user, metadata):
-        """
-        DFD 2.3 — Store Quiz Metadata in DB
-        """
-        quiz = Quiz.objects.create(
+    @classmethod
+    def store_quiz_metadata(cls, user, metadata):
+        return Quiz.objects.create(
             created_by=user,
             title=metadata["title"],
             difficulty=metadata["difficulty"],
@@ -48,14 +51,8 @@ class QuizService:
             status=metadata["status"]
         )
 
-        return quiz
-
-    @staticmethod
-    def generate_question_set(metadata):
-        """
-        DFD 2.4 — Generate Question Set using Groq AI
-        """
-
+    @classmethod
+    def generate_question_set(cls, metadata):
         title = metadata["title"]
         difficulty = metadata["difficulty"]
         question_count = metadata["question_count"]
@@ -66,14 +63,14 @@ Difficulty: {difficulty}
 
 Rules:
 - Each question must contain exactly 4 options.
-- The 'answer' field MUST be the single character key ('A', 'B', 'C', or 'D') corresponding to the correct option.
+- The 'answer' must be one of: A, B, C, D.
 - Return ONLY valid JSON.
 
 Format:
 [
   {{
-    "question": "Exactly what is asked?",
-    "options": ["Option 1 content", "Option 2 content", "Option 3 content", "Option 4 content"],
+    "question": "...",
+    "options": ["...", "...", "...", "..."],
     "answer": "A"
   }}
 ]
@@ -83,47 +80,35 @@ Format:
 
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
+            messages=[{"role": "user", "content": prompt}],
             temperature=0.7
         )
 
         content = response.choices[0].message.content.strip()
 
         try:
-            questions = json.loads(content)
+            return json.loads(content)
         except Exception:
-            # Fallback if AI response is not valid JSON
-            questions = []
+            return []
 
-        return questions
-
-    @staticmethod
-    def store_generated_questions(quiz, questions):
-        """
-        DFD 2.5 — Store Generated Questions in DB
-        """
+    @classmethod
+    def store_generated_questions(cls, quiz, questions):
         created_questions = []
+
         for q in questions:
-            # Ensure options exist before indexing
             options = q.get("options", ["", "", "", ""])
-            # Pad options if less than 4
             while len(options) < 4:
                 options.append("")
-            
+
             raw_answer = str(q.get("answer", "")).strip()
-            
-            # Robust Mapping: If AI returned the full text instead of A/B/C/D, find the key
+
             correct_key = raw_answer
-            if len(raw_answer) > 1 or raw_answer not in ["A", "B", "C", "D"]:
-                # Try to find which option matches the raw text
+            if correct_key not in ["A", "B", "C", "D"]:
                 for i, opt in enumerate(options):
                     if str(opt).strip() == raw_answer:
-                        correct_key = chr(65 + i) # 0->A, 1->B...
+                        correct_key = chr(65 + i)
                         break
-                # Default to A if still not matched/valid
-                if len(correct_key) != 1 or correct_key not in ["A", "B", "C", "D"]:
+                else:
                     correct_key = "A"
 
             question_obj = Question.objects.create(
@@ -135,14 +120,11 @@ Format:
                 option_d=options[3],
                 correct_answer=correct_key
             )
+
             created_questions.append(question_obj)
-        
+
         return created_questions
 
-    @staticmethod
-    def generate_quiz(user, topic, difficulty, num_questions):
-        raise NotImplementedError("DFD 2.0 not implemented yet.")
-
-    @staticmethod
-    def get_quiz_by_id(quiz_id):
+    @classmethod
+    def get_quiz_by_id(cls, quiz_id):
         raise NotImplementedError("DFD 2.0 not implemented yet.")
