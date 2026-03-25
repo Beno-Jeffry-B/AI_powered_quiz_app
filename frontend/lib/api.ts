@@ -72,7 +72,8 @@ async function callAPI(
 // ===============================
 
 // Register user
-export function signup(email, password) {
+
+export function signup(email: string, password: string) {
   return callAPI("/api/v1/auth/register/", "POST", {
     email: email,
     password: password,
@@ -81,7 +82,7 @@ export function signup(email, password) {
 }
 
 // Login user
-export function login(email, password) {
+export function login(email: string, password: string) {
   return callAPI("/api/v1/auth/login/", "POST", {
     email: email,
     password: password,
@@ -94,7 +95,7 @@ export function login(email, password) {
 // ===============================
 
 // Generate quiz
-export function generateQuiz(topic, numberOfQuestions, difficulty, timeLimit) {
+export function generateQuiz(topic: string, numberOfQuestions: number, difficulty: string, timeLimit: number) {
   return callAPI("/api/v1/quizzes/generate/", "POST", {
     topic: topic,
     number_of_questions: numberOfQuestions,
@@ -109,7 +110,7 @@ export function getQuizHistory() {
 }
 
 // Get single quiz detail
-export function getQuizDetail(quizId) {
+export function getQuizDetail(quizId: string) {
   return callAPI("/api/v1/quizzes/" + quizId + "/");
 }
 
@@ -119,7 +120,7 @@ export function getQuizDetail(quizId) {
 // ===============================
 
 // Submit quiz answers
-export function submitQuizAttempt(quizId, answers) {
+export function submitQuizAttempt(quizId: string, answers: any[]) {
   return callAPI("/api/v1/attempts/", "POST", {
     quiz_id: quizId,
     answers: answers,
