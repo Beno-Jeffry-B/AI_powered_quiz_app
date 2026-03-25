@@ -42,8 +42,7 @@ async function callAPI(
 
     // 6. Handle other errors
     if (!response.ok) {
-      let errorData = {};
-
+      let errorData: any = {};
       try {
         errorData = await response.json();
       } catch (e) {
